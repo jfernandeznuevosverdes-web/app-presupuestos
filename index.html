@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Presupuestos LRS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{font-family:Arial;padding:15px;background:#f5f5f5}
+    h1{color:#2e7d32}
+    input{width:100%;padding:15px;font-size:18px;margin-bottom:10px;border-radius:10px;border:1px solid #ccc}
+    .card{background:white;padding:15px;margin:10px 0;border-radius:12px;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+    button{padding:10px 15px;margin-top:8px;font-size:16px;border-radius:8px;border:none;background:#2e7d32;color:white}
+    #cart{position:fixed;bottom:0;left:0;right:0;background:white;padding:15px;border-top:2px solid #ddd}
+    .discount button{background:#555;margin-right:5px}
+  </style>
+</head>
+
+<body>
+
+<h1>La Rural Semillería</h1>
+
+<input id="search" placeholder="Buscar producto...">
+
+<div id="products"></div>
+
+<div id="cart">
+  <b>Productos en presupuesto: <span id="count">0</span></b>
+  <div class="discount">
+    <p>Descuento:</p>
+    <button onclick="setDiscount(0)">Sin desc</button>
+    <button onclick="setDiscount(10)">10%</button>
+    <button onclick="setDiscount(15)">15%</button>
+  </div>
+  <br>
+  <button onclick="share()">Compartir por WhatsApp</button>
+</div>
+
+<script>
+const SHEET_URL="https://opensheet.elk.sh/1wakz73pZgU3WZuov5ZcaDQbB4mxylYsZ9EaaaUwtHFg/productos";
+let products=[];
+let cart=[];
+let discount=0;
+
+fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+  products=data;
+  render(products);
+});
+
+function render(list){
+  productsDiv.innerHTML="";
+  list.forEach(p=>{
+    productsDiv.innerHTML+=`
+      <div class="card">
+        <b>${p.Producto}</b><br>
+        $${p["Precio bruto"]}
+        <br>
+        <button onclick='add("${p.Producto}",${p["Precio bruto"]})'>Agregar</button>
+      </div>`;
+  });
+}
+
+search.oninput=e=>{
+  const text=e.target.value.toLowerCase();
+  render(products.filter(p=>p.Producto.toLowerCase().includes(text)));
+}
+
+function add(name,price){
+  cart.push({name,price});
+  count.innerText=cart.length;
+}
+
+function setDiscount(d){
+  discount=d;
+  alert("Descuento "+d+"% aplicado");
+}
+
+function share(){
+  let subtotal=cart.reduce((a,b)=>a+b.price,0);
+  let total=subtotal-(subtotal*discount/100);
+  let msg="Presupuesto:%0A";
+  cart.forEach(p=>msg+=`• ${p.name} $${p.price}%0A`);
+  msg+=`Subtotal: $${subtotal}%0ADescuento: ${discount}%0ATOTAL: $${total}`;
+  window.open("https://wa.me/?text="+msg);
+}
+</script>
+
+</body>
+</html>
